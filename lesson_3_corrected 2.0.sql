@@ -17,7 +17,6 @@ CREATE TABLE visits(
  id INT UNSIGNED NOT NULL PRIMARY KEY,
  last_visit BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- это номер визита(сделал его авто-инкрементированным)
  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
- updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  INDEX fk_visits_profiles_idx (last_visit),
  CONSTRAINT fk_visits_profiles FOREIGN KEY (last_visit) REFERENCES profiles (user_id)
 )ENGINE=InnoDB;
@@ -28,8 +27,7 @@ CREATE TABLE games(
  id INT UNSIGNED NOT NULL PRIMARY KEY,
  game_id INT UNSIGNED NOT NULL,
  name VARCHAR(145) NOT NULL,
- INDEX fk_games_game_id_idx (game_id),
- CONSTRAINT fk_games_profiles FOREIGN KEY (game_id) REFERENCES profiles (user_id)
+ INDEX fk_games_game_id_idx (game_id)
 )ENGINE=InnoDB;
 
 
