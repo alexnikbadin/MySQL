@@ -17,14 +17,16 @@ CREATE TABLE users (
 ) COMMENT = 'Покупатели';
 
 INSERT INTO users (name, birthday_at, created_at, updated_at) VALUES
-  ('Геннадий', '1990-10-05', DEFAULT, DEFAULT);
-  ('Наталья', '1984-11-12', DEFAULT, DEFAULT),
-  ('Александр', '1985-05-20', DEFAULT, DEFAULT),
-  ('Сергей', '1988-02-14', DEFAULT, DEFAULT),
-  ('Иван', '1998-01-12', DEFAULT, DEFAULT),
-  ('Мария', '1992-08-29', DEFAULT, DEFAULT);
+  ('Геннадий', '1990-10-05', NULL, NULL),
+  ('Наталья', '1984-11-12', NULL, NULL),
+  ('Александр', '1985-05-20', NULL, NULL),
+  ('Сергей', '1988-02-14', NULL, NULL),
+  ('Иван', '1998-01-12', NULL, NULL),
+  ('Мария', '1992-08-29', NULL, NULL);
+ 
+UPDATE users SET created_at = NOW() WHERE created_at IS NULL;
   
- SELECT * FROM users;
+SELECT * FROM users;
 
 /* 2. Таблица users была неудачно спроектирована. 
  Записи created_at и updated_at были заданы типом VARCHAR 
@@ -54,15 +56,15 @@ DESCRIBE users;
 
 
 ALTER TABLE users ADD COLUMN created_at_new DATETIME;
-UPDATE users SET created_at_new = STR_TO_DATE(created_at, '%m/%d/%Y %H:%i');-- не работает
+UPDATE users SET created_at_new = STR_TO_DATE(created_at, '%d.%m.%Y %H:%i');
 ALTER TABLE users DROP COLUMN created_at;
-ALTER TABLE USERS MODIFY created_at_new created_at DATETIME NOT NULL;
+ALTER TABLE users RENAME COLUMN created_at_new TO created_at;
 
 
 ALTER TABLE users ADD COLUMN updated_at_new DATETIME;
-UPDATE users SET updated_at_new = STR_TO_DATE(updated_at, '%m/%d/%Y %H:%i');-- не работает
+UPDATE users SET updated_at_new = STR_TO_DATE(updated_at, '%d.%m.%Y %H:%i');
 ALTER TABLE users DROP COLUMN updated_at;
-ALTER TABLE USERS MODIFY updated_at_new updated_at DATETIME NOT NULL;
+ALTER TABLE users RENAME COLUMN updated_at_new TO updated_at;
 
 
 
@@ -161,13 +163,14 @@ INSERT INTO users (name, birthday_at, created_at, updated_at) VALUES
   ('Сергей', '1988-02-14', now(), now()),
   ('Иван', '1998-01-12', now(), now()),
   ('Мария', '1992-08-29', now(), now());
+ 
 SELECT name, ROUND((UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP (birthday_at))/86400 / 365.25, 1) AS average_age
 FROM users;
 
 SELECT ROUND(AVG(ROUND((UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP (birthday_at))/86400 / 365.25, 0)), 1) AS average_age
 FROM users;
 
-SELECT (TIMESTAMPDIFF(YEAR, birthday_at, NOW())) AS average_age FROM users; -- этот вариант округляет до 
+SELECT AVG(TIMESTAMPDIFF(YEAR, birthday_at, NOW())) AS average_age FROM users; -- этот вариант округляет до 
 -- целых(например Марию он округлил до 28, имея на старте 28.6, что на мой вгляд не совсем корректно)
 
 /* 2. Подсчитайте количество дней рождения, которые приходятся на каждый из дней недели. 
