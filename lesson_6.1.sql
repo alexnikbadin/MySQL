@@ -364,24 +364,22 @@ AND is_delivered = 1 GROUP BY from_user_id; -- наибольшее количе
  */
 
 
-SELECT COUNT(*) AS total_count FROM posts_likes 
-WHERE user_id IN 
-				(
-                SELECT user_id FROM profiles 
-                WHERE TIMESTAMPDIFF(YEAR, birthday, NOW()) >= 18
-                );
+SELECT COUNT(*) AS total_count 
+FROM posts_likes 
+WHERE post_id IN (SELECT id FROM posts WHERE user_id IN 
+                 (SELECT user_id FROM profiles 
+                  WHERE YEAR(CURDATE()) - YEAR(birthday) < 18)
+                 ) AND like_type = 1 GROUP BY post_id;
                 
 /*
  * 3. Определить, кто больше поставил лайков (всего) - мужчины или женщины?
  */
                
                            
- SELECT COUNT(user_id), gender FROM profiles 
- WHERE user_id IN (SELECT user_id 
-                   FROM posts_likes
-                   WHERE like_type = 1
-                   )
-GROUP BY gender;            -- женщины поставили 3 лайка, а мужчины 2
+ SELECT (SELECT gender FROM profiles 
+         WHERE user_id = posts_likes.user_id) AS gender, COUNT(*) AS total
+ FROM posts_likes
+ GROUP BY gender;           
 
 /*
  * 4. (по желанию) Найти пользователя, который проявляет наименьшую 
@@ -399,3 +397,65 @@ WHERE to_user_id = 2 OR to_user_id = 0 GROUP BY from_user_id; -- from_user_id 1
 /*
  *Возникает вопрос: один ли пользователь user_id 1 и from_user_id 1 ?
  */
+
+
+
+-- Решение посредством Join
+
+-- 1  * 
+  /* 1. Пусть задан некоторый пользователь.
+Из всех друзей этого пользователя найдите человека, 
+который больше всех общался с нашим пользователем. (можете взять пользователя с любым id).
+ */
+
+SELECT * FROM users;
+SELECT * FROM profiles;
+SELECT * FROM posts;
+SELECT * FROM posts_likes;
+SELECT * FROM messages;
+SELECT * FROM friend_requests_types;
+SELECT * FROM friend_requests;
+
+
+
+SELECT u.first_name, u.last_name, u.id, COUNT(u.id) AS total_count
+FROM users u 
+	JOIN friend_requests fr ON (fr.from_user_id = 1 AND fr.to_user_id = u.id) OR (fr.to_user_id = 1 AND fr.from_user_id = u.id)
+	JOIN messages m ON (m.from_user_id = 1 AND m.to_user_id = u.id) OR (m.to_user_id = 1 AND m.from_user_id = u.id)
+WHERE fr.request_type = 1
+GROUP BY u.id;
+
+
+/*
+ * 2. Подсчитать общее количество лайков на посты, которые получили пользователи младше 18 лет.
+ */
+
+
+SELECT COUNT(pl.like_type) AS total_count FROM posts_likes pl
+	 JOIN profiles p
+	 JOIN posts ON posts.id = pl.post_id AND posts.user_id = p.user_id WHERE YEAR(CURDATE()) - YEAR(p.birthday) < 18
+	 AND like_type = 1;
+
+
+/*
+ * 3. Определить, кто больше поставил лайков (всего) - мужчины или женщины?
+ */
+	
+	SELECT p.gender, COUNT(p.gender) AS total_count FROM profiles p 
+		 JOIN posts_likes pl ON p.user_id = pl.user_id
+		 GROUP BY p.gender;
+
+
+/*
+ * 4. (по желанию) Найти пользователя, который проявляет наименьшую 
+ * активность в использовании социальной сети.
+ */
+		
+SELECT CONCAT(u.first_name, '  ', u.last_name) AS person, COUNT(*) FROM users u
+	 JOIN friend_requests fr ON u.id = fr.from_user_id OR u.id = fr.to_user_id AND fr.request_type = 1
+	 JOIN messages m ON u.id = m.from_user_id 
+	 JOIN posts_likes pl ON u.id = pl.user_id	
+GROUP BY person
+; -- Bonnie  Prosacco с минимальным количеством активностей
+
+
