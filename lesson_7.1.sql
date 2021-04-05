@@ -2,6 +2,7 @@ CREATE DATABASE shop;
 
 USE shop;
 
+SHOW tables; 
 DROP TABLE IF EXISTS catalogs;
 
 
@@ -184,7 +185,10 @@ INSERT INTO storehouses_products (storehouse_id, product_id, value) VALUES
   SELECT * FROM orders; 
  
  
-  SELECT name FROM users WHERE id IN (SELECT user_id FROM orders);
+ SELECT u.name, COUNT(u.name) AS orders_count FROM users u 
+ JOIN orders o ON u.id = o.user_id
+ GROUP BY u.name;
+
  
  
  /*
@@ -197,7 +201,7 @@ INSERT INTO storehouses_products (storehouse_id, product_id, value) VALUES
 SELECT products.name AS products, 
 catalogs.name AS catalogs 
 FROM products 
-JOIN catalogs 
+LEFT JOIN catalogs 
 ON products.catalog_id = catalogs.id;
 
 
@@ -235,11 +239,33 @@ VALUES ('moscow', 'москва'),
        ('omsk', 'омск'),
        ('kazan', 'казань');    
       
-SELECT id, 
+SELECT * FROM cities;
+
+SELECT * FROM flights;
+
+
+SELECT f.id, f.from_c -- f.to_c 
+FROM flights f
+JOIN cities c ON f.from_c = c.label 
+UNION 
+SELECT * FROM cities c WHERE c.name = c.label;-- AND c.name = c.label
+
+-- ORDER BY f.id;
+
+
+SELECT id,
 (SELECT name FROM cities WHERE label = from_c) AS departure,
 (SELECT name FROM cities WHERE label = to_c) AS arrival
 FROM flights;
       
       
-      
+SELECT f.id, c.name AS departure, c.name AS arrival
+FROM flights f
+JOIN cities c ON f.from_c = c.name AND f.to_c = c.name
+WHERE c.label = c.name;
+
+
+
+SELECT f.id, c.* FROM flights f
+JOIN cities c ON c.name = c.label;
       
